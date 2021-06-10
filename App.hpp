@@ -7,6 +7,9 @@
 #include <iostream>
 #include <vector>
 
+#ifndef __APP_H__
+#define __APP_H__
+
 void GLLogCall(const char* func_name, const int line_num){
 	while(GLenum err = glGetError()){
 		std::cout << "[OpenGL Error] (" << err << ") function: "  << func_name << " line : " << line_num << std::endl;
@@ -18,10 +21,16 @@ void GLLogCall(const char* func_name, const int line_num){
 					GLLogCall(__PRETTY_FUNCTION__, __LINE__)
 
 
-#include "Shader.hpp"
-#include "Material.hpp"
+#define BUFFER_OFFSET(x) ((GLvoid*)(x))
 
 #define point4 glm::vec4
+
+#include "Shader.hpp"
+#include "Material.hpp"
+#include "Camera.hpp"
+#include "Model.hpp"
+#include "Window.hpp"
+
 glm::vec3 cross(glm::vec4 a, glm::vec4 b){
 	glm::vec3 a1 = glm::vec3(a.x, a.y, a.z);
 	glm::vec3 b1 = glm::vec3(b.x, b.y, b.z);
@@ -125,205 +134,8 @@ void tetrahedron( int count ){
 }
 
 
-#define BUFFER_OFFSET(x) ((GLvoid*)(x))
-class Model{
-public:
-	GLuint vao, buffer;
-	unsigned int numVertices;
-	glm::vec3 m_scale = glm::vec3(0.02f);
-	Model(int num_ver, point4* vertices, glm::vec3* normals,  GLuint vPosition, GLuint vNormal){
-		numVertices = num_ver;
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenBuffers(1, &buffer);
-		glBindBuffer(GL_ARRAY_BUFFER, buffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(point4)*numVertices + sizeof(glm::vec3)*numVertices, NULL, GL_STATIC_DRAW);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(point4)*numVertices, vertices);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(point4)*numVertices, sizeof(glm::vec3)*numVertices, normals);
-		glEnableVertexAttribArray(vPosition);
-		glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
-		glEnableVertexAttribArray(vNormal);
-		glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4)*numVertices));
-	}
-
-	glm::mat4 getModelMatrix(float x, float y, float z){
-		glm::mat4 mat = glm::mat4(1.0f);
-		mat = glm::translate(mat, glm::vec3(x, y, z));
-		mat = glm::scale(mat, m_scale);
-		return mat;
-	}
-
-	void setScale(float x, float y, float z){
-		m_scale = glm::vec3(x, y, z);
-	}
-
-	void Bind(){
-		GLCall(glBindVertexArray(vao));
-		GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer));
-	}
-};
-
-class Camera{
-public:
-	glm::vec3 m_position;
-	glm::vec3 m_up;
-	glm::vec3 m_front;
-
-	//static Camera *instance;
-	
-	int n = 0;
-
-	bool m_changed = true;
 
 
-	float m_speed = 0.05f;
-
-	Camera(){
-		m_position = glm::vec3(0.0f, 0.0f, 1.0f);
-		m_front = glm::vec3(0.0f, 0.0f, -1.0f);
-		m_up = glm::vec3(0.0f, 1.0f, 0.0f);
-	}
-
-	static Camera* getInstance(){
-		static Camera instance;
-		return &instance;
-	}
-
-	glm::mat4 getView() const{
-		return glm::lookAt(m_position, m_position + m_front, m_up);
-	}
-
-	void moveForward(void){
-		m_position += m_speed * m_front;
-		m_changed = true;
-	}
-
-	void moveBackward(void){
-		m_position -= m_speed * m_front;
-		m_changed = true;
-	}
-
-	void moveRight(void){
-		m_position += glm::normalize(glm::cross(m_front, m_up)) * m_speed;
-		m_changed = true;
-	}
-
-	void moveLeft(void){
-		m_position -= glm::normalize(glm::cross(m_front, m_up)) * m_speed;
-		m_changed = true;
-	}
-
-	bool hasChanged(){
-		if(m_changed){
-			m_changed = false;
-			return true;
-		}
-		return false;
-	}
-
-};
-
-
-class Window{
-public:
-	int m_width = 640, m_height = 480;
-	GLFWwindow* m_window;
-
-	Window(){
-
-		/* Initialize the library */
-		if (!glfwInit())
-			return;
-
-		/* Create a windowed mode window and its OpenGL context */
-		m_window = glfwCreateWindow(m_width, m_height, "Comp 410 Project", NULL, NULL);
-		if (!m_window) {
-			glfwTerminate();
-			return;
-		}
-
-		/* Make the window's context current */
-		glfwMakeContextCurrent(m_window);
-		glfwSetKeyCallback(m_window, key_callback);
-	}
-
-	~Window(){
-		glfwDestroyWindow(m_window);
-		glfwTerminate();
-	}	
-
-	bool shouldClose(){
-		return glfwWindowShouldClose(m_window);
-	}
-
-	void swapBuffers(){
-		/* Swap front and back buffers */
-		glfwSwapBuffers(m_window);
-		/* Poll for and process events */
-		glfwPollEvents();
-	}
-	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
-		if (key == GLFW_KEY_W && action == GLFW_PRESS){
-			printf("Move camera forward\n");
-			Camera *camera = Camera::getInstance();
-			camera->moveForward();
-		}
-		else if(key == GLFW_KEY_A && action == GLFW_PRESS){
-			printf("Move camera LEFT\n");
-			Camera *camera = Camera::getInstance();
-			camera->moveLeft();
-		}
-		else if(key == GLFW_KEY_S && action == GLFW_PRESS){
-			printf("Move camera backward\n");
-			Camera *camera = Camera::getInstance();
-			camera->moveBackward();
-		}
-		else if(key == GLFW_KEY_D && action == GLFW_PRESS){
-			printf("Move camera right\n");
-			Camera *camera = Camera::getInstance();
-			camera->moveRight();
-		}
-		else if(key == GLFW_KEY_1 && action == GLFW_PRESS){
-			printf("1\n");
-			App *app = App::getInstance();
-			app->setMaterial(1);
-		}
-		else if(key == GLFW_KEY_2 && action == GLFW_PRESS){
-			printf("2\n");
-			App *app = App::getInstance();
-			app->setMaterial(2);
-		}
-		else if(key == GLFW_KEY_3 && action == GLFW_PRESS){
-			printf("3\n");
-			App *app = App::getInstance();
-			app->setMaterial(3);
-		}
-		else if(key == GLFW_KEY_4 && action == GLFW_PRESS){
-			printf("4\n");
-			App *app = App::getInstance();
-			app->setMaterial(4);
-		}
-		else if(key == GLFW_KEY_5 && action == GLFW_PRESS){
-			printf("5\n");
-			App *app = App::getInstance();
-			app->setMaterial(5);
-		}
-		else if(key == GLFW_KEY_6 && action == GLFW_PRESS){
-			printf("6\n");
-			App *app = App::getInstance();
-			app->setMaterial(6);
-			
-		}
-	}
-
-	float getAR(){
-		return (float)m_width / (float)m_height;
-	}
-
-	
-
-};
 
 
 #include "psys.hpp"
@@ -499,3 +311,5 @@ public:
 		return fps * 1000.0f;
 	}
 };
+
+#endif
