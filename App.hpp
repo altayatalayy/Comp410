@@ -78,6 +78,33 @@ void tetrahedron( int count ){
 	divide_triangle( v[0], v[2], v[3], count );
 }
 
+
+void initLight(){
+
+    glm::vec4 light_position( 0.0, 0.0, 2.0, 0.0 );
+    glm::vec4 light_ambient( 0.2, 0.2, 0.2, 1.0 );
+    glm::vec4 light_diffuse( 1.0, 1.0, 1.0, 1.0 );
+    glm::vec4 light_specular( 1.0, 1.0, 1.0, 1.0 );
+   	glm::vec4  material_ambient( 1.0, 0.0, 1.0, 1.0 );
+    glm::vec4 material_diffuse( 1.0, 0.8, 0.0, 1.0 );
+    glm::vec4 material_specular( 1.0, 0.0, 1.0, 1.0 );
+    float material_shininess = 5.0;
+    glm::vec4 ambient_product = light_ambient * material_ambient;
+    glm::vec4 diffuse_product = light_diffuse * material_diffuse;
+    glm::vec4 specular_product = light_specular * material_specular;
+}
+   /* glUniform4fv( glGetUniformLocation(program, "AmbientProduct"),
+        1, ambient_product );
+    glUniform4fv( glGetUniformLocation(program, "DiffuseProduct"),
+        1, diffuse_product );
+    glUniform4fv( glGetUniformLocation(program, "SpecularProduct"),
+        1, specular_product );
+    glUniform4fv( glGetUniformLocation(program, "LightPosition"),
+        1, light_position );
+    glUniform1f( glGetUniformLocation(program, "Shininess"),
+       material_shininess );
+       */
+
 #define BUFFER_OFFSET(x) ((GLvoid*)x)
 class Model{
 public:
