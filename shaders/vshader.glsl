@@ -9,15 +9,16 @@ out  vec3 fE;
 
 
 uniform mat4 u_MVP;
+uniform mat4 u_Model;
 uniform vec4 LightPosition;
 
 void main() {
-    fN = vNormal;
-    fE = vPosition.xyz;
-    fL = LightPosition.xyz;
-    if( LightPosition.w != 0.0 ) {
-        fL = LightPosition.xyz - vPosition.xyz;
-}
-    gl_Position = u_MVP*vPosition;
+	fN = vNormal;
+	fE = vPosition.xyz;
+	fL = LightPosition.xyz;
+	if( LightPosition.w != 0.0 ) {
+		fL = LightPosition.xyz - (u_Model * vPosition).xyz;
+	}
+	gl_Position = u_MVP*vPosition;
 }
 

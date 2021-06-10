@@ -18,6 +18,52 @@ void GLLogCall(const char* func_name, const int line_num){
 					x;\
 					GLLogCall(__PRETTY_FUNCTION__, __LINE__)
 #define point4 glm::vec4
+glm::vec3 cross(glm::vec4 a, glm::vec4 b){
+	glm::vec3 a1 = glm::vec3(a.x, a.y, a.z);
+	glm::vec3 b1 = glm::vec3(b.x, b.y, b.z);
+	return glm::cross(a1, b1);
+}
+
+point4 points[36];
+
+point4 vertices[8] = {
+	point4( -0.5, -0.5,  0.5, 1.0 ),
+	point4( -0.5,  0.5,  0.5, 1.0 ),
+	point4(  0.5,  0.5,  0.5, 1.0 ),
+	point4(  0.5, -0.5,  0.5, 1.0 ),
+	point4( -0.5, -0.5, -0.5, 1.0 ),
+	point4( -0.5,  0.5, -0.5, 1.0 ),
+	point4(  0.5,  0.5, -0.5, 1.0 ),
+	point4(  0.5, -0.5, -0.5, 1.0 )
+};
+
+
+int Index = 0;
+glm::vec3 normalsCube[36];
+void quad( int a, int b, int c, int d ) {
+	// Initialize temporary vectors along the quad’s edge to
+	//   compute its face normal
+	glm::vec4 u = vertices[b] - vertices[a];
+	glm::vec4 v = vertices[c] - vertices[b];
+	glm::vec3 normal = glm::normalize( cross(u, v) );
+	normalsCube[Index] = normal; points[Index] = vertices[a]; Index++;
+	normalsCube[Index] = normal; points[Index] = vertices[b]; Index++;
+	normalsCube[Index] = normal; points[Index] = vertices[c]; Index++;
+	normalsCube[Index] = normal; points[Index] = vertices[a]; Index++;
+	normalsCube[Index] = normal; points[Index] = vertices[c]; Index++;
+	normalsCube[Index] = normal; points[Index] = vertices[d]; Index++;
+}
+
+void colorcube(){
+	quad( 1, 0, 3, 2 );
+	quad( 2, 3, 7, 6 );
+	quad( 3, 0, 4, 7 );
+	quad( 6, 5, 1, 2 );
+	quad( 4, 5, 6, 7 );
+	quad( 5, 4, 0, 1 );
+}
+
+
 const int NumTimesToSubdivide = 5;
 const int NumTriangles = 4096;
 const int NumVerticesSphere = 3 * NumTriangles;
@@ -27,11 +73,7 @@ glm::vec3 normals[NumVerticesSphere];
 
 const GLfloat  DivideByZeroTolerance = GLfloat(1.0e-07);
 
-glm::vec3 cross(glm::vec4 a, glm::vec4 b){
-	glm::vec3 a1 = glm::vec3(a.x, a.y, a.z);
-	glm::vec3 b1 = glm::vec3(b.x, b.y, b.z);
-	return glm::cross(a1, b1);
-}
+
 
 int IndexSphere = 0;
 void triangle( const point4& a, const point4& b, const point4& c ){
@@ -79,59 +121,37 @@ void tetrahedron( int count ){
 }
 
 
-void initLight(){
-
-    glm::vec4 light_position( 0.0, 0.0, 2.0, 0.0 );
-    glm::vec4 light_ambient( 0.2, 0.2, 0.2, 1.0 );
-    glm::vec4 light_diffuse( 1.0, 1.0, 1.0, 1.0 );
-    glm::vec4 light_specular( 1.0, 1.0, 1.0, 1.0 );
-   	glm::vec4  material_ambient( 1.0, 0.0, 1.0, 1.0 );
-    glm::vec4 material_diffuse( 1.0, 0.8, 0.0, 1.0 );
-    glm::vec4 material_specular( 1.0, 0.0, 1.0, 1.0 );
-    float material_shininess = 5.0;
-    glm::vec4 ambient_product = light_ambient * material_ambient;
-    glm::vec4 diffuse_product = light_diffuse * material_diffuse;
-    glm::vec4 specular_product = light_specular * material_specular;
-}
-   /* glUniform4fv( glGetUniformLocation(program, "AmbientProduct"),
-        1, ambient_product );
-    glUniform4fv( glGetUniformLocation(program, "DiffuseProduct"),
-        1, diffuse_product );
-    glUniform4fv( glGetUniformLocation(program, "SpecularProduct"),
-        1, specular_product );
-    glUniform4fv( glGetUniformLocation(program, "LightPosition"),
-        1, light_position );
-    glUniform1f( glGetUniformLocation(program, "Shininess"),
-       material_shininess );
-       */
-
-#define BUFFER_OFFSET(x) ((GLvoid*)x)
+#define BUFFER_OFFSET(x) ((GLvoid*)(x))
 class Model{
 public:
-	GLuint vao;
-	unsigned int numVertices = NumVerticesSphere;
-	Model(GLuint vPosition, GLuint vNormal){
-		tetrahedron(NumTimesToSubdivide);
+	GLuint vao, buffer;
+	unsigned int numVertices;
+	Model(int num_ver, point4* vertices, glm::vec3* normals,  GLuint vPosition, GLuint vNormal){
+		numVertices = num_ver;
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
 
-		GLuint buffer;
 		glGenBuffers(1, &buffer);
 		glBindBuffer(GL_ARRAY_BUFFER, buffer);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(pointSphere) + sizeof(normals), NULL, GL_STATIC_DRAW);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(pointSphere), pointSphere);
-		glBufferSubData(GL_ARRAY_BUFFER, sizeof(pointSphere), sizeof(normals), normals);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(point4)*numVertices + sizeof(glm::vec3)*numVertices, NULL, GL_STATIC_DRAW);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(point4)*numVertices, vertices);
+		glBufferSubData(GL_ARRAY_BUFFER, sizeof(point4)*numVertices, sizeof(glm::vec3)*numVertices, normals);
 		glEnableVertexAttribArray(vPosition);
 		glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 		glEnableVertexAttribArray(vNormal);
-		glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(pointSphere)));
+		glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(point4)*numVertices));
 	}
 
 	glm::mat4 getModelMatrix(float x, float y, float z){
 		glm::mat4 mat = glm::mat4(1.0f);
 		mat = glm::translate(mat, glm::vec3(x, y, z));
-		mat = glm::scale(mat, glm::vec3(0.01f));
+		mat = glm::scale(mat, glm::vec3(0.02f));
 		return mat;
+	}
+
+	void Bind(){
+		GLCall(glBindVertexArray(vao));
+		GLCall(glBindBuffer(GL_ARRAY_BUFFER, buffer));
 	}
 };
 
@@ -310,6 +330,18 @@ public:
 		GLCall(glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mat)));
 	}
 
+	void setUniform4f(const std::string& name, glm::vec4 vec){
+		GLint location = getUniformLocation(name);
+		GLCall(glUniform4fv(location, 1, glm::value_ptr(vec)));
+	}
+
+	void setUniform1f(const std::string& name, float val){
+		GLint location = getUniformLocation(name);
+		GLCall(glUniform1f(location, val));
+	}
+
+
+
 	void Bind(){
 		GLCall(glUseProgram(m_program));
 	}
@@ -368,7 +400,7 @@ public:
 
 void init_rope(int n, particleSystem& ps){
 	std::vector<particle> particles;
-	float dy = 0.05f;
+	float dy = 0.15f;
 	for(int i=0; i<n; i++){
 		particle p = particle(position_t(0.0f, 0.5f - (float)i*dy, 0.0f), 0.035f, 0.001f);
 		if(i == 0){
@@ -387,6 +419,7 @@ static std::chrono::milliseconds get_time(){
 	return ms;
 }
 
+
 class App{
 public:
 	Shader shader;
@@ -403,22 +436,45 @@ public:
 	std::chrono::milliseconds start_time;
 
 	particleSystem ps;
-	unsigned int m_numParticles = 15;
+	unsigned int m_numParticles = 3;
 
 	App(){
+		tetrahedron(NumTimesToSubdivide);
+		colorcube();
 		m_camera = Camera::getInstance();
+		glewExperimental = GL_TRUE;
+		glewInit();
 		GLCall(glEnable( GL_DEPTH_TEST ));
 		GLCall(glEnable(GL_CULL_FACE));
 		init_rope(m_numParticles, ps);
-		glewExperimental = GL_TRUE;
-		glewInit();
+
 		shader = Shader("shaders/vshader.glsl",  "shaders/fshader.glsl");
 		//compute_shader = ComputeShader("shaders/compute.glsl");
 		shader.Bind();
 		GLint vPosition = shader.getAttribLocation("vPosition");
 		GLint vNormal = shader.getAttribLocation("vNormal");
-		Model sphere(vPosition, vNormal);
+		Model sphere(NumVerticesSphere, pointSphere, normals, vPosition, vNormal);
+		Model cube(36, points, normalsCube, vPosition, vNormal);
 		m_models.push_back(sphere);
+		m_models.push_back(cube);
+
+		glm::vec4 light_position( 0.0, 0.0, 2.0, 0.0 );
+		glm::vec4 light_ambient( 0.2, 0.2, 0.2, 1.0 );
+		glm::vec4 light_diffuse( 1.0, 1.0, 1.0, 1.0 );
+		glm::vec4 light_specular( 1.0, 1.0, 1.0, 1.0 );
+		glm::vec4 material_ambient( 1.0, 0.0, 1.0, 1.0 );
+		glm::vec4 material_diffuse( 1.0, 0.8, 0.0, 1.0 );
+		glm::vec4 material_specular( 1.0, 0.0, 1.0, 1.0 );
+		float material_shininess = 5.0;
+		glm::vec4 ambient_product = light_ambient * material_ambient;
+		glm::vec4 diffuse_product = light_diffuse * material_diffuse;
+		glm::vec4 specular_product = light_specular * material_specular;
+
+		shader.setUniform4f("AmbientProduct", ambient_product);
+		shader.setUniform4f("DiffuseProduct", diffuse_product);
+		shader.setUniform4f("LightPosition", light_position);
+		shader.setUniform4f("SpecularProduct", specular_product);
+		shader.setUniform1f("Shininess", material_shininess);
 	}
 
 	~App(){
@@ -453,7 +509,7 @@ public:
 			n++;
 			if(n % 20 == 0){
 				printf("fps = %f\n", getFps());
-				ps.run();
+				//ps.run();
 				ps.applyWind(m_numParticles-1);
 			}
 		}
@@ -461,14 +517,26 @@ public:
 
 	void draw(){
 		//ps.update(0.01f);
-		for(int i = 0; i<m_numParticles; i++){
+		Model& model = m_models[1];
+		model.Bind();
+		glm::mat4 pv = getPVMatrix();
+		glm::mat4 mm = model.getModelMatrix(0.0f, 0.0f, 0.0f);
+		glm::mat4 mvp = pv * mm;
+		shader.Bind();
+		shader.setUniformMat4("u_MVP", mvp);
+		shader.setUniformMat4("u_Model", mm);
+		GLCall(glDrawArrays(GL_TRIANGLES, 0, model.numVertices));
+
+		model = m_models[0];
+		for(int i = 3; i<m_numParticles; i++){
 			//printf("%f\n", ps.get_sim_time());
 			auto pos = ps.get_positions();
-			Model& model = m_models[0];
-			GLCall(glBindVertexArray(model.vao));
-			glm::mat4 mvp = getPVMatrix() * model.getModelMatrix(pos[i*3], pos[i*3+1], pos[i*3+2]);
+			model.Bind();
+			glm::mat4 mm = model.getModelMatrix(pos[i*3], pos[i*3+1], pos[i*3+2]);
+			glm::mat4 mvp = pv * mm;
 			shader.Bind();
 			shader.setUniformMat4("u_MVP", mvp);
+			shader.setUniformMat4("u_Model", mm);
 			GLCall(glDrawArrays(GL_TRIANGLES, 0, model.numVertices));
 		}
 		frame_count++;
