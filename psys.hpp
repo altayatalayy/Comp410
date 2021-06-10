@@ -101,10 +101,12 @@ public:
 };
 
 #include <mutex>
+#include <unordered_map>
+
 class particleSystem {
 private:
 	double sim_time;
-	force_t* wind;
+	force_t wind;
 	unsigned int wind_idx;
 	std::vector<particle> _particles;
 	std::vector<springdamper> _spdampers;
@@ -117,6 +119,7 @@ private:
 
 
 public:
+	std::unordered_map<int, int> m_windMap;
 	float dy;
 	particleSystem();
 	//particleSystem(particleSystem&& other);
@@ -126,6 +129,18 @@ public:
 	void stop(void);
 	double get_sim_time(void) const;
 	float* positions;
+
+	void applyWind(int idx){
+		if(m_windMap.find(idx) == m_windMap.end()){ 
+			m_windMap[idx] = _particles[idx].register_force(wind);
+		}
+	}
+
+	void updateWind(int idx){
+		int f_idx = m_windMap.at(idx);
+		_particles[idx].update_force(wind, f_idx);
+	}
+
 	float* get_positions() const{
 		for(int i=0; i<_particles.size(); i++){
 			position_t pos = _particles[i].get_position();

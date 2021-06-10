@@ -242,8 +242,8 @@ void springdamper::update(void) {
 
 
 //Particle system
-particleSystem::particleSystem() : sim_time(0.0f), is_running(false), _dt(0.0002), dy(0.05){
-	wind = new force_t(1, 0, 0);
+particleSystem::particleSystem() : sim_time(0.0f), is_running(false), _dt(0.0001), dy(0.05){
+	wind = force_t(1, 0, 0);
 	wind_idx = 1;
 	_workers.reserve(n_worker);
 }

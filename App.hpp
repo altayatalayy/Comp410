@@ -376,7 +376,7 @@ public:
 	std::chrono::milliseconds start_time;
 
 	particleSystem ps;
-	unsigned int m_numParticles = 100;
+	unsigned int m_numParticles = 15;
 
 	App(){
 		m_camera = Camera::getInstance();
@@ -418,7 +418,6 @@ public:
 		start_time = get_time();
 		/* Loop until the user closes the window */
 		int n = 0;
-		ps.run();
 		while(!m_window.shouldClose()) {
 			/* Render here */
 			GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
@@ -427,6 +426,8 @@ public:
 			n++;
 			if(n % 20 == 0){
 				printf("fps = %f\n", getFps());
+				ps.run();
+				ps.applyWind(m_numParticles-1);
 			}
 		}
 	}
