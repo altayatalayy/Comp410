@@ -6,7 +6,6 @@
 
 #include <iostream>
 #include <vector>
-#include "InitShader.hpp"
 
 void GLLogCall(const char* func_name, const int line_num){
 	while(GLenum err = glGetError()){
@@ -17,6 +16,11 @@ void GLLogCall(const char* func_name, const int line_num){
 #define GLCall(x) while(glGetError() != GL_NO_ERROR);\
 					x;\
 					GLLogCall(__PRETTY_FUNCTION__, __LINE__)
+
+
+#include "Shader.hpp"
+#include "Material.hpp"
+
 #define point4 glm::vec4
 glm::vec3 cross(glm::vec4 a, glm::vec4 b){
 	glm::vec3 a1 = glm::vec3(a.x, a.y, a.z);
@@ -126,6 +130,7 @@ class Model{
 public:
 	GLuint vao, buffer;
 	unsigned int numVertices;
+	glm::vec3 m_scale = glm::vec3(0.02f);
 	Model(int num_ver, point4* vertices, glm::vec3* normals,  GLuint vPosition, GLuint vNormal){
 		numVertices = num_ver;
 		glGenVertexArrays(1, &vao);
@@ -145,8 +150,12 @@ public:
 	glm::mat4 getModelMatrix(float x, float y, float z){
 		glm::mat4 mat = glm::mat4(1.0f);
 		mat = glm::translate(mat, glm::vec3(x, y, z));
-		mat = glm::scale(mat, glm::vec3(0.02f));
+		mat = glm::scale(mat, m_scale);
 		return mat;
+	}
+
+	void setScale(float x, float y, float z){
+		m_scale = glm::vec3(x, y, z);
 	}
 
 	void Bind(){
@@ -287,115 +296,6 @@ public:
 };
 
 
-#include <unordered_map>
-
-class Shader{
-public:
-	GLuint m_program;
-	std::unordered_map<std::string, GLint> m_uniforms;
-
-	Shader(){
-	}
-
-	Shader(const std::string& vshader, const std::string& fshader){
-		m_program = InitShader(vshader.c_str(), fshader.c_str());
-	}
-
-	~Shader(){
-		GLCall(glDeleteShader(m_program));
-	}
-
-	GLint getUniformLocation(const std::string& name){
-		GLint location;
-		if(m_uniforms.find(name) == m_uniforms.end()){
-			GLCall(location = glGetUniformLocation(m_program, name.c_str()));
-			if(location == -1){
-				std::cout << "Uniform: " << name << " Location not found" << std::endl;
-			}
-			m_uniforms[name] = location;
-		}else{
-			location = m_uniforms.at(name);
-		}
-		return location;
-	}
-
-	GLint getAttribLocation(const std::string& name){
-		GLint location;
-		GLCall(location = glGetAttribLocation(m_program, name.c_str()));
-		return location;
-	}
-
-	void setUniformMat4(const std::string& name, glm::mat4& mat){
-		GLint location = getUniformLocation(name);
-		GLCall(glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mat)));
-	}
-
-	void setUniform4f(const std::string& name, glm::vec4 vec){
-		GLint location = getUniformLocation(name);
-		GLCall(glUniform4fv(location, 1, glm::value_ptr(vec)));
-	}
-
-	void setUniform1f(const std::string& name, float val){
-		GLint location = getUniformLocation(name);
-		GLCall(glUniform1f(location, val));
-	}
-
-
-
-	void Bind(){
-		GLCall(glUseProgram(m_program));
-	}
-};
-
-class ComputeShader : public Shader{
-public:
-
-	ComputeShader(){
-
-	}
-
-	ComputeShader(const std::string& file){
-		compile(file);	
-	}
-
-	void compile(const std::string& file){
-		char * source = readShaderSource(file.c_str());
-		GLuint shader = glCreateShader(GL_COMPUTE_SHADER);			
-		glShaderSource(shader, 1, (const GLchar**)&source, NULL);
-		glCompileShader(shader);
-		GLint compiled;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
-		if(!compiled){
-			printf("Compute Not compiled\n");
-			GLint  logSize;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
-			char* logMsg = new char[logSize];
-			glGetShaderInfoLog(shader, logSize, NULL, logMsg);
-			std::cerr << logMsg << std::endl;
-			delete [] logMsg;
-			exit( EXIT_FAILURE );
-		}
-
-		m_program = glCreateProgram();
-		glAttachShader(m_program, shader);
-		glLinkProgram(m_program);
-
-		GLint linked;
-		glGetProgramiv(m_program, GL_LINK_STATUS, &linked);
-		if(!linked){
-			printf("Compute not linked\n");
-			GLint  logSize;
-			glGetProgramiv(m_program, GL_INFO_LOG_LENGTH, &logSize);
-			char* logMsg = new char[logSize];
-			glGetProgramInfoLog(m_program, logSize, NULL, logMsg );
-			std::cerr << logMsg << std::endl;
-			delete [] logMsg;
-			exit( EXIT_FAILURE );
-		}
-
-	}
-};
-
 #include "psys.hpp"
 
 void init_rope(int n, particleSystem& ps){
@@ -431,6 +331,9 @@ public:
 	glm::mat4 m_PV;
 
 	std::vector<Model> m_models;
+	Model* sphere;
+	Model* cube;
+	std::vector<Material> m_materials;
 
 	unsigned long int frame_count = 0;
 	std::chrono::milliseconds start_time;
@@ -453,28 +356,25 @@ public:
 		shader.Bind();
 		GLint vPosition = shader.getAttribLocation("vPosition");
 		GLint vNormal = shader.getAttribLocation("vNormal");
-		Model sphere(NumVerticesSphere, pointSphere, normals, vPosition, vNormal);
-		Model cube(36, points, normalsCube, vPosition, vNormal);
-		m_models.push_back(sphere);
-		m_models.push_back(cube);
+		sphere = new Model(NumVerticesSphere, pointSphere, normals, vPosition, vNormal);
+		cube = new Model(36, points, normalsCube, vPosition, vNormal);
+		cube->setScale(0.5f, 0.5f, 0.5f);
+		Material material;
+		Chrome chrome;
+		Gold gold;
+		Silver silver;
+		Bronze bronze;
+		Obsidian obsidian;
+		BlackRubber black_rubber;
+		m_materials.push_back(chrome);
+		m_materials.push_back(gold);
+		m_materials.push_back(silver);
+		m_materials.push_back(bronze);
+		m_materials.push_back(black_rubber);
+		m_materials.push_back(obsidian);
 
-		glm::vec4 light_position( 0.0, 0.0, 2.0, 0.0 );
-		glm::vec4 light_ambient( 0.2, 0.2, 0.2, 1.0 );
-		glm::vec4 light_diffuse( 1.0, 1.0, 1.0, 1.0 );
-		glm::vec4 light_specular( 1.0, 1.0, 1.0, 1.0 );
-		glm::vec4 material_ambient( 1.0, 0.0, 1.0, 1.0 );
-		glm::vec4 material_diffuse( 1.0, 0.8, 0.0, 1.0 );
-		glm::vec4 material_specular( 1.0, 0.0, 1.0, 1.0 );
-		float material_shininess = 5.0;
-		glm::vec4 ambient_product = light_ambient * material_ambient;
-		glm::vec4 diffuse_product = light_diffuse * material_diffuse;
-		glm::vec4 specular_product = light_specular * material_specular;
+		m_materials[1].useMaterial(shader);
 
-		shader.setUniform4f("AmbientProduct", ambient_product);
-		shader.setUniform4f("DiffuseProduct", diffuse_product);
-		shader.setUniform4f("LightPosition", light_position);
-		shader.setUniform4f("SpecularProduct", specular_product);
-		shader.setUniform1f("Shininess", material_shininess);
 	}
 
 	~App(){
@@ -517,27 +417,25 @@ public:
 
 	void draw(){
 		//ps.update(0.01f);
-		Model& model = m_models[1];
-		model.Bind();
+		cube->Bind();
 		glm::mat4 pv = getPVMatrix();
-		glm::mat4 mm = model.getModelMatrix(0.0f, 0.0f, 0.0f);
+		glm::mat4 mm = cube->getModelMatrix(0.0f, 0.0f, 0.0f);
 		glm::mat4 mvp = pv * mm;
 		shader.Bind();
 		shader.setUniformMat4("u_MVP", mvp);
 		shader.setUniformMat4("u_Model", mm);
-		GLCall(glDrawArrays(GL_TRIANGLES, 0, model.numVertices));
+		GLCall(glDrawArrays(GL_TRIANGLES, 0, cube->numVertices));
 
-		model = m_models[0];
 		for(int i = 3; i<m_numParticles; i++){
 			//printf("%f\n", ps.get_sim_time());
 			auto pos = ps.get_positions();
-			model.Bind();
-			glm::mat4 mm = model.getModelMatrix(pos[i*3], pos[i*3+1], pos[i*3+2]);
+			sphere->Bind();
+			glm::mat4 mm = sphere->getModelMatrix(pos[i*3], pos[i*3+1], pos[i*3+2]);
 			glm::mat4 mvp = pv * mm;
 			shader.Bind();
 			shader.setUniformMat4("u_MVP", mvp);
 			shader.setUniformMat4("u_Model", mm);
-			GLCall(glDrawArrays(GL_TRIANGLES, 0, model.numVertices));
+			GLCall(glDrawArrays(GL_TRIANGLES, 0, sphere->numVertices));
 		}
 		frame_count++;
 	}
