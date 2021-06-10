@@ -3,9 +3,6 @@
 #include <stdio.h>
 #include <iostream>
 
-#ifndef __INITS_H__
-#define __INITS_H__
-
 // Create a NULL-terminated string by reading the provided file
 static char* readShaderSource(const char* shaderFile) {
     FILE* fp = fopen(shaderFile, "r");
@@ -91,4 +88,3 @@ GLuint InitShader(const char* vShaderFile, const char* fShaderFile) {
 
     return program;
 }
-#endif

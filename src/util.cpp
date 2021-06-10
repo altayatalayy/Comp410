@@ -1,5 +1,20 @@
-#ifndef __UTIL_H__
-#define __UTIL_H__
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "util.hpp"
+#include "psys.hpp"
+
+point4 points[36];
+const int NumTimesToSubdivide = 5;
+const int NumTriangles = 4096;
+const int NumVerticesSphere = 3 * NumTriangles;
+point4 pointSphere[NumVerticesSphere];
+glm::vec3 normals[NumVerticesSphere];
+const GLfloat  DivideByZeroTolerance = GLfloat(1.0e-07);
+glm::vec3 normalsCube[36];
 
 void GLLogCall(const char* func_name, const int line_num){
 	while(GLenum err = glGetError()){
@@ -7,22 +22,12 @@ void GLLogCall(const char* func_name, const int line_num){
 	}
 }
 
-#define GLCall(x) while(glGetError() != GL_NO_ERROR);\
-					x;\
-					GLLogCall(__PRETTY_FUNCTION__, __LINE__)
-
-
-#define BUFFER_OFFSET(x) ((GLvoid*)(x))
-
-#define point4 glm::vec4
-
 glm::vec3 cross(glm::vec4 a, glm::vec4 b){
 	glm::vec3 a1 = glm::vec3(a.x, a.y, a.z);
 	glm::vec3 b1 = glm::vec3(b.x, b.y, b.z);
 	return glm::cross(a1, b1);
 }
 
-point4 points[36];
 
 point4 vertices[8] = {
 	point4( -0.5, -0.5,  0.5, 1.0 ),
@@ -37,7 +42,6 @@ point4 vertices[8] = {
 
 
 int Index = 0;
-glm::vec3 normalsCube[36];
 void quad( int a, int b, int c, int d ) {
 	// Initialize temporary vectors along the quad’s edge to
 	//   compute its face normal
@@ -52,24 +56,18 @@ void quad( int a, int b, int c, int d ) {
 	normalsCube[Index] = normal; points[Index] = vertices[d]; Index++;
 }
 
-void colorcube(){
+Data colorcube(){
 	quad( 1, 0, 3, 2 );
 	quad( 2, 3, 7, 6 );
 	quad( 3, 0, 4, 7 );
 	quad( 6, 5, 1, 2 );
 	quad( 4, 5, 6, 7 );
 	quad( 5, 4, 0, 1 );
+	Data data{36, points, normalsCube};
+	return data;
 }
 
 
-const int NumTimesToSubdivide = 5;
-const int NumTriangles = 4096;
-const int NumVerticesSphere = 3 * NumTriangles;
-
-point4 pointSphere[NumVerticesSphere];
-glm::vec3 normals[NumVerticesSphere];
-
-const GLfloat  DivideByZeroTolerance = GLfloat(1.0e-07);
 
 int IndexSphere = 0;
 void triangle( const point4& a, const point4& b, const point4& c ){
@@ -103,7 +101,8 @@ void divide_triangle( const point4& a, const point4& b, const point4& c, int cou
 	}
 }
 
-void tetrahedron( int count ){
+Data tetrahedron(void){
+	int count = NumTimesToSubdivide; 
 	point4 v[4] = {
 		glm::vec4( 0.0, 0.0, 1.0, 1.0 ),
 		glm::vec4( 0.0, 0.942809, -0.333333, 1.0 ),
@@ -114,9 +113,10 @@ void tetrahedron( int count ){
 	divide_triangle( v[3], v[2], v[1], count );
 	divide_triangle( v[0], v[3], v[1], count );
 	divide_triangle( v[0], v[2], v[3], count );
+	Data data{NumVerticesSphere, pointSphere, normals};
+	return data;
 }
 
-#include "psys.hpp"
 
 void init_rope(int n, particleSystem& ps){
 	std::vector<particle> particles;
@@ -132,4 +132,3 @@ void init_rope(int n, particleSystem& ps){
 }
 
 
-#endif
