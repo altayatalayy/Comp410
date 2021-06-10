@@ -242,19 +242,21 @@ void springdamper::update(void) {
 
 
 //Particle system
-particleSystem::particleSystem() : sim_time(0.0f), is_running(false), _dt(0.0001), dy(0.05){
+particleSystem::particleSystem() : sim_time(0.0f), is_running(false), _dt(0.000005), dy(0.05){
 	wind = force_t(1, 0, 0);
 	wind_idx = 1;
 	_workers.reserve(n_worker);
 }
 
 
+#define abs(x) ((x) < 0) ? -x : x
 
 void particleSystem::add_particles(std::vector<particle>& particles) {
 	_particles = std::move(particles);
+	dy = abs(_particles[0].get_position()._y - _particles[1].get_position()._y);
 	for (int i = 0; i < _particles.size(); i++) {
 		if (i != _particles.size()-1) {
-			_spdampers.push_back(springdamper(1.2, 4.6*20.f, _particles[i], _particles[i + 1], this->dy));
+			_spdampers.push_back(springdamper(3.2, 4.6*45.0f, _particles[i], _particles[i + 1], this->dy));
 		}
 	}
 	positions = new float[_particles.size()*3];
@@ -278,6 +280,9 @@ double particleSystem::get_sim_time(void) const{
 
 
 void particleSystem::run(void){
+	if(is_running){
+		return;
+	}
 	is_running = true;
 	std::thread t([&]{
 			while(this->is_running){

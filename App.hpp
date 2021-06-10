@@ -300,9 +300,9 @@ public:
 
 void init_rope(int n, particleSystem& ps){
 	std::vector<particle> particles;
-	float dy = 0.15f;
+	float dy = 0.10f;
 	for(int i=0; i<n; i++){
-		particle p = particle(position_t(0.0f, 0.5f - (float)i*dy, 0.0f), 0.035f, 0.001f);
+		particle p = particle(position_t(0.0f, 1.3f - (float)i*dy, 0.0f), 0.035f, 0.001f);
 		if(i == 0){
 			p.fix();
 		}
@@ -339,7 +339,16 @@ public:
 	std::chrono::milliseconds start_time;
 
 	particleSystem ps;
-	unsigned int m_numParticles = 3;
+	unsigned int m_numParticles = 20;
+
+	Material material;
+	Chrome chrome;
+	Gold gold;
+	Silver silver;
+	Bronze bronze;
+	Obsidian obsidian;
+	BlackRubber black_rubber;
+
 
 	App(){
 		tetrahedron(NumTimesToSubdivide);
@@ -358,22 +367,8 @@ public:
 		GLint vNormal = shader.getAttribLocation("vNormal");
 		sphere = new Model(NumVerticesSphere, pointSphere, normals, vPosition, vNormal);
 		cube = new Model(36, points, normalsCube, vPosition, vNormal);
-		cube->setScale(0.5f, 0.5f, 0.5f);
-		Material material;
-		Chrome chrome;
-		Gold gold;
-		Silver silver;
-		Bronze bronze;
-		Obsidian obsidian;
-		BlackRubber black_rubber;
-		m_materials.push_back(chrome);
-		m_materials.push_back(gold);
-		m_materials.push_back(silver);
-		m_materials.push_back(bronze);
-		m_materials.push_back(black_rubber);
-		m_materials.push_back(obsidian);
-
-		m_materials[1].useMaterial(shader);
+		cube->setScale(0.3f, 0.15f, 0.1f);
+		black_rubber.useMaterial(shader);
 
 	}
 
@@ -409,8 +404,8 @@ public:
 			n++;
 			if(n % 20 == 0){
 				printf("fps = %f\n", getFps());
-				//ps.run();
-				ps.applyWind(m_numParticles-1);
+				ps.run();
+				//ps.applyWind(m_numParticles-3);
 			}
 		}
 	}
@@ -419,14 +414,14 @@ public:
 		//ps.update(0.01f);
 		cube->Bind();
 		glm::mat4 pv = getPVMatrix();
-		glm::mat4 mm = cube->getModelMatrix(0.0f, 0.0f, 0.0f);
+		glm::mat4 mm = cube->getModelMatrix(0.0f, 1.4f, 0.0f);
 		glm::mat4 mvp = pv * mm;
 		shader.Bind();
 		shader.setUniformMat4("u_MVP", mvp);
 		shader.setUniformMat4("u_Model", mm);
 		GLCall(glDrawArrays(GL_TRIANGLES, 0, cube->numVertices));
 
-		for(int i = 3; i<m_numParticles; i++){
+		for(int i = 0; i<m_numParticles; i++){
 			//printf("%f\n", ps.get_sim_time());
 			auto pos = ps.get_positions();
 			sphere->Bind();
