@@ -1,3 +1,8 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #ifndef __CAMERA_H__
 #define __CAMERA_H__
 

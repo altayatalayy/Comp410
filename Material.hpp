@@ -1,3 +1,9 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
+
 //#pragma once
 #ifndef __MATERIAL_H__
 #define __MATERIAL_H__

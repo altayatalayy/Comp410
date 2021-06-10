@@ -6,10 +6,12 @@
 
 #include <unordered_map>
 
+#include "util.hpp"
+#include "InitShader.hpp"
+
 #ifndef __SHADER_H__
 #define __SHADER_H__
 
-#include "InitShader.hpp"
 
 class Shader{
 public:

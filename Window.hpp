@@ -1,8 +1,14 @@
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #include "Camera.hpp"
-#include "App.hpp"
+#include "util.hpp"
 
 #ifndef __WINDOW_H__
 #define __WINDOW_H__
+
 class Window{
 public:
 	int m_width = 640, m_height = 480;
