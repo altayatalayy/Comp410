@@ -263,7 +263,6 @@ public:
 		/* Poll for and process events */
 		glfwPollEvents();
 	}
-
 	static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods){
 		if (key == GLFW_KEY_W && action == GLFW_PRESS){
 			printf("Move camera forward\n");
@@ -284,6 +283,37 @@ public:
 			printf("Move camera right\n");
 			Camera *camera = Camera::getInstance();
 			camera->moveRight();
+		}
+		else if(key == GLFW_KEY_1 && action == GLFW_PRESS){
+			printf("1\n");
+			App *app = App::getInstance();
+			app->setMaterial(1);
+		}
+		else if(key == GLFW_KEY_2 && action == GLFW_PRESS){
+			printf("2\n");
+			App *app = App::getInstance();
+			app->setMaterial(2);
+		}
+		else if(key == GLFW_KEY_3 && action == GLFW_PRESS){
+			printf("3\n");
+			App *app = App::getInstance();
+			app->setMaterial(3);
+		}
+		else if(key == GLFW_KEY_4 && action == GLFW_PRESS){
+			printf("4\n");
+			App *app = App::getInstance();
+			app->setMaterial(4);
+		}
+		else if(key == GLFW_KEY_5 && action == GLFW_PRESS){
+			printf("5\n");
+			App *app = App::getInstance();
+			app->setMaterial(5);
+		}
+		else if(key == GLFW_KEY_6 && action == GLFW_PRESS){
+			printf("6\n");
+			App *app = App::getInstance();
+			app->setMaterial(6);
+			
 		}
 	}
 
@@ -322,6 +352,12 @@ static std::chrono::milliseconds get_time(){
 
 class App{
 public:
+
+	static App* getInstance(){
+		static App instance;
+		return &instance;
+	}
+
 	Shader shader;
 	//ComputeShader compute_shader;
 	Camera *m_camera;
@@ -374,6 +410,28 @@ public:
 
 	~App(){
 		ps.stop();
+	}
+
+	void setMaterial(int number){
+		if(number == 1){
+			black_rubber.useMaterial(shader);
+		}
+		if(number == 2){
+			gold.useMaterial(shader);
+		}
+		if(number == 3){
+			bronze.useMaterial(shader);
+		}
+		if(number == 4){
+			chrome.useMaterial(shader);
+		}
+		if(number == 5){
+			obsidian.useMaterial(shader);
+		}
+		if(number == 6){
+			silver.useMaterial(shader);
+		}
+
 	}
 
 	glm::mat4 getProjectionMatrix(){
