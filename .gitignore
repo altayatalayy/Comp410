@@ -3,4 +3,5 @@ bin/*
 *.o
 *.out
 .DS_Store
+imgui.ini
 

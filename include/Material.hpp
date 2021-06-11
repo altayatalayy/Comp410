@@ -27,15 +27,10 @@ public:
 	glm::vec4 mat_diffuse;
 	glm::vec4 mat_specular;
 	float shine = 5.0;
-
 	Light m_light;
 
 	Material();
-	
-
 	void useMaterial(Shader& shader);
-
-	
 };
 
 class Obsidian : public Material{

@@ -11,7 +11,7 @@
 
 class Window{
 public:
-	int m_width = 640, m_height = 480;
+	int m_width = 1600, m_height = 900;
 	GLFWwindow* m_window;
 
 	Window();

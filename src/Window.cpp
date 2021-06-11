@@ -8,13 +8,19 @@
 #include "Window.hpp"
 #include "App.hpp"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 Window::Window(){
 
+	
 	/* Initialize the library */
 	if (!glfwInit())
 		return;
 
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	//glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 	/* Create a windowed mode window and its OpenGL context */
 	m_window = glfwCreateWindow(m_width, m_height, "Comp 410 Project", NULL, NULL);
 	if (!m_window) {
@@ -25,9 +31,24 @@ Window::Window(){
 	/* Make the window's context current */
 	glfwMakeContextCurrent(m_window);
 	glfwSetKeyCallback(m_window, key_callback);
+
+	glewExperimental = GL_TRUE;
+	if(glewInit() != GLEW_OK){
+		printf("glew init error\n");
+	}
+
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(m_window, true);
+	const char* glsl_version = "#version 130";
+	ImGui_ImplOpenGL3_Init(glsl_version);
 }
 
 Window::~Window(){
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
+	ImGui::DestroyContext();
 	glfwDestroyWindow(m_window);
 	glfwTerminate();
 }	

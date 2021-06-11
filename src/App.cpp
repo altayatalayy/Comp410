@@ -12,7 +12,9 @@
 #include "Window.hpp"
 #include "util.hpp"
 
-
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 std::chrono::milliseconds get_time(){
 	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds >(
@@ -33,8 +35,6 @@ App::App(){
 	Data sphere_data = tetrahedron();
 	Data cube_data = colorcube();
 	m_camera = Camera::getInstance();
-	glewExperimental = GL_TRUE;
-	glewInit();
 	GLCall(glEnable(GL_DEPTH_TEST));
 	GLCall(glEnable(GL_CULL_FACE));
 	init_rope(m_numParticles, ps);
@@ -98,13 +98,43 @@ void App::run(){
 	/* Loop until the user closes the window */
 	int n = 0;
 	while(!m_window.shouldClose()) {
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		{
+			ImGui::Begin("Particle System Menu");
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+			ImGui::Text("Select Material");
+			if(ImGui::Button("Black Rubber")){
+				setMaterial(1);
+			}
+			if(ImGui::Button("Gold")){
+				setMaterial(2);
+			}
+			if(ImGui::Button("Bronze")){
+				setMaterial(3);
+			}
+			if(ImGui::Button("Chrome")){
+				setMaterial(4);
+			}
+			if(ImGui::Button("Obsidian")){
+				setMaterial(5);
+			}
+			if(ImGui::Button("Silver")){
+				setMaterial(6);
+			}
+
+			ImGui::End();
+		}
+		ImGui::Render();
 		/* Render here */
 		GLCall(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		draw();
 		m_window.swapBuffers();
 		n++;
 		if(n % 20 == 0){
-			printf("fps = %f\n", getFps());
+			//printf("fps = %f\n", getFps());
 			ps.run();
 			//ps.applyWind(m_numParticles-3);
 		}
