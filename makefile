@@ -13,8 +13,12 @@ CXX = g++
 TARGET=main.out
 
 $(TARGET): main.cpp
-$(TARGET): $(OBJFILES) #$(OBJS)
+$(TARGET): $(OBJFILES) 
 	g++ main.cpp -o $(TARGET) $(OBJFILES) $(IMGUIOBJS) -lglfw -lGL -lGLEW -lpthread -I ./include -I $(IMGUI_DIR) -I $(IMGUI_DIR)/backends
+
+imgui: $(OBJS)
+	mkdir -p bin/imgui/
+	mv *.o bin/imgui/
 
 %.o:$(IMGUI_DIR)/%.cpp
 		$(CXX) $(CXXFLAGS) -c -o $@ $<
@@ -29,5 +33,6 @@ bin/%.o: src/%.cpp include/%.hpp
 clean:
 	rm $(OBJFILES)
 	rm $(TARGET)
+	rm -rf bin/
 
 .PHONY: clean
