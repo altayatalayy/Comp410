@@ -136,9 +136,22 @@ public:
 		}
 	}
 
-	void updateWind(int idx){
-		int f_idx = m_windMap.at(idx);
-		_particles[idx].update_force(wind, f_idx);
+	void stopWind(int idx){
+		if(m_windMap.find(idx) != m_windMap.end()){ 
+			int f_idx = m_windMap.at(idx);
+			_particles[idx].update_force(force_t(0.0f, 0.0f, 0.0f), f_idx);
+			m_windMap.erase(idx);
+		}
+	}
+
+	void updateWind(force_t new_wind){
+		wind = new_wind;
+		int p_idx, f_idx; 
+		for(auto kv : m_windMap){
+			p_idx = kv.first;
+			f_idx = kv.second;
+			_particles[p_idx].update_force(wind, f_idx);
+		}
 	}
 
 	float* get_positions() const{

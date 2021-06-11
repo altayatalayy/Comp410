@@ -96,15 +96,19 @@ void App::run(){
 	GLCall(glClearColor(0.7f, 0.7f, 0.7f, 1.0f));
 	start_time = get_time();
 	/* Loop until the user closes the window */
-	int n = 0;
+	bool wind_at_idx1 = false, wind_at_idx2 = false;
+	bool run_ps = false;
+	float wx = 2.0f;
 	while(!m_window.shouldClose()) {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
+
 		{
 			ImGui::Begin("Particle System Menu");
+			ImGui::SetWindowFontScale(1.2f);
 			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-			ImGui::Text("Select Material");
+			ImGui::Text("Select Material\n");
 			if(ImGui::Button("Black Rubber")){
 				setMaterial(1);
 			}
@@ -123,6 +127,10 @@ void App::run(){
 			if(ImGui::Button("Silver")){
 				setMaterial(6);
 			}
+			ImGui::Checkbox("Run", &run_ps);
+			ImGui::Checkbox("Apply Wind to particle 1", &wind_at_idx1);
+			ImGui::Checkbox("Apply Wind to particle 2", &wind_at_idx2);
+			ImGui::SliderFloat(": Wind x", &wx, -1.0f, 1.0f);
 
 			ImGui::End();
 		}
@@ -132,11 +140,26 @@ void App::run(){
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		draw();
 		m_window.swapBuffers();
-		n++;
-		if(n % 20 == 0){
-			//printf("fps = %f\n", getFps());
+		if(run_ps){
 			ps.run();
-			//ps.applyWind(m_numParticles-3);
+			if(wind_at_idx1){
+				ps.applyWind(5);
+			}else{
+				ps.stopWind(5);
+			}
+
+			if(wind_at_idx2){
+				ps.applyWind(19);
+			}else{
+				ps.stopWind(19);
+
+			}
+			if(wx != 2.0f){
+				ps.updateWind(force_t(wx, 0.0f, 0.0f));
+			}
+
+		}else{
+			ps.stop();
 		}
 	}
 }

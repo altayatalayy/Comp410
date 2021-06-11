@@ -294,9 +294,10 @@ void particleSystem::run(void){
 }
 
 void particleSystem::stop(void){
+	static int n = 0;
 	if(is_running){
 		is_running = false;
-		_workers[0].join();
+		_workers[n++].join();
 	}
 }
 
