@@ -4,11 +4,11 @@ OBJFILES = $(subst src, bin, $(patsubst %.cpp, %.o, $(SRCFILES)))
 IMGUI_DIR = ./imgui
 SOURCES = $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_tables.cpp $(IMGUI_DIR)/imgui_widgets.cpp
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
-IMGUIOBJS = $(shell find bin/imgui/ -type f -name '*.o')
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
-CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends `sdl2-config --cflags --libs`
-CXXFLAGS += -g -Wall -Wformat -lSDL2main -lSDL2 
+CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
+CXXFLAGS += -g -Wall -Wformat
 CXX = g++
+IMGUIOBJS = $(shell find bin/imgui/ -type f -name '*.o')
 
 TARGET=main.out
 
