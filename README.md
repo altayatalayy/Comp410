@@ -1,13 +1,20 @@
 # Comp410 Project Particle Simulation
 
-# Launch
+## Install
 ```console
-make imgui
+sudo apt install libglm-dev libglfw3 libglfw3-dev libglew-dev
+git submodule init
+git submodule update
+make install
+```
+
+## Launch
+```console
 make
 ./main.out
 ```
 
-# Technologies 
+## Technologies 
 
 
 * OpenGL
