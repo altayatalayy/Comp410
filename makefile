@@ -6,7 +6,7 @@ SOURCES = $(IMGUI_DIR)/imgui.cpp $(IMGUI_DIR)/imgui_draw.cpp $(IMGUI_DIR)/imgui_
 SOURCES += $(IMGUI_DIR)/backends/imgui_impl_glfw.cpp $(IMGUI_DIR)/backends/imgui_impl_opengl3.cpp
 OBJS = $(addsuffix .o, $(basename $(notdir $(SOURCES))))
 CXXFLAGS = -I$(IMGUI_DIR) -I$(IMGUI_DIR)/backends
-CXXFLAGS += -g -Wall -Wformat
+CXXFLAGS += -g -Wall -Wformat -stdc++=11
 CXX = g++
 IMGUIOBJS = $(shell find bin/imgui/ -type f -name '*.o')
 
@@ -14,10 +14,9 @@ TARGET=main.out
 
 $(TARGET): main.cpp
 $(TARGET): $(OBJFILES) 
-	g++ main.cpp -o $(TARGET) $(OBJFILES) $(IMGUIOBJS) -lglfw -lGL -lGLEW -lpthread -I ./include -I $(IMGUI_DIR) -I $(IMGUI_DIR)/backends
+	$(CXX) main.cpp -o $(TARGET) $(OBJFILES) $(IMGUIOBJS) -lglfw -lGL -lGLEW -lpthread -I ./include -I $(IMGUI_DIR) -I $(IMGUI_DIR)/backends
 
 imgui: $(OBJS)
-	mkdir -p bin/imgui/
 	mv *.o bin/imgui/
 
 %.o:$(IMGUI_DIR)/%.cpp
@@ -27,12 +26,17 @@ imgui: $(OBJS)
 		$(CXX) $(CXXFLAGS) -c -o $@ $<
 
 bin/%.o: src/%.cpp include/%.hpp
-	g++ -c $(subst bin, src, $<) -o $@ -lglfw -lGL -lGLEW -lpthread -I ./include -I ./imgui -I imgui/backends
+	$(CXX) -c $(subst bin, src, $<) -o $@ -lglfw -lGL -lGLEW -lpthread -I ./include -I ./imgui -I imgui/backends
 
+install:
+	git submodule init
+	git submodule update
+	mkdir -p bin/imgui/
+	make imgui
 
 clean:
 	rm $(OBJFILES)
 	rm $(TARGET)
 	rm -rf bin/
 
-.PHONY: clean
+.PHONY: clean install
